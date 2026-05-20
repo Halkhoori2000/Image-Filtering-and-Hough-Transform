@@ -96,5 +96,5 @@ houghScript   % runs full pipeline on data/ → outputs saved to results/
 
 ## Course
 
-CMPSC 473 — Computer Vision  
-The Pennsylvania State University · 2022
+TBD  
+The Pennsylvania State University

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Filtering & Hough Transform — MATLAB Pipeline</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #1f6feb;
+    --accent-hover: #388bfd;
+    --green: #3fb950;
+    --orange: #d29922;
+    --purple: #a371f7;
+    --pink: #f778ba;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 14px;
+    color: var(--muted);
+  }
+
+  header .links {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+  }
+
+  header .links a {
+    font-size: 13px;
+    color: var(--accent-hover);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  header .links a:hover { background: var(--border); }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* Pipeline flow */
+  .pipeline-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding: 16px 0;
+  }
+
+  .stage-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: all 0.15s;
+    min-width: 130px;
+    text-align: center;
+  }
+
+  .stage-chip:hover { border-color: var(--accent); }
+
+  .stage-chip.active {
+    border-color: var(--accent);
+    background: rgba(31, 111, 235, 0.1);
+  }
+
+  .stage-chip .stage-num {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stage-chip .stage-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .stage-chip .stage-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.3;
+  }
+
+  .stage-chip.s0 .stage-name { color: var(--text); }
+  .stage-chip.s1 .stage-name { color: var(--green); }
+  .stage-chip.s2 .stage-name { color: var(--orange); }
+  .stage-chip.s3 .stage-name { color: var(--purple); }
+  .stage-chip.s4 .stage-name { color: var(--pink); }
+
+  .arrow {
+    color: var(--muted);
+    font-size: 18px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* Image selector */
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .img-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+
+  .img-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .img-btn:hover { border-color: var(--accent); }
+
+  .img-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* Main display */
+  .display-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stage-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+
+  .stage-card.highlighted { border-color: var(--accent); }
+
+  .stage-card-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stage-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .s0 .stage-dot { background: var(--text); }
+  .s1 .stage-dot { background: var(--green); }
+  .s2 .stage-dot { background: var(--orange); }
+  .s3 .stage-dot { background: var(--purple); }
+  .s4 .stage-dot { background: var(--pink); }
+
+  .stage-card-header .label {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .stage-card-header .sublabel {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .stage-card img {
+    width: 100%;
+    display: block;
+    background: #000;
+  }
+
+  /* Algorithm section */
+  .algo-section {
+    margin-top: 40px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+
+  .algo-section h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  .algo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .algo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .algo-card .algo-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .algo-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(31,111,235,0.15);
+    color: var(--accent-hover);
+    border: 1px solid rgba(31,111,235,0.3);
+  }
+
+  .algo-card p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 40px;
+  }
+
+  footer a { color: var(--accent-hover); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Image Filtering &amp; Hough Transform</h1>
+  <p>MATLAB · Edge Detection · Hough Accumulator · Line Detection &nbsp;·&nbsp; CMPSC 473 — Computer Vision, Penn State 2022</p>
+  <div class="links">
+    <a href="https://github.com/Halkhoori2000/Image-Filtering-and-Hough-Transform" target="_blank">GitHub</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Pipeline flow -->
+  <div class="section-label">Pipeline Stages</div>
+  <div class="pipeline-flow">
+    <div class="stage-chip s0 active" onclick="setStage(0)">
+      <span class="stage-num">Stage 0</span>
+      <span class="stage-name">Original</span>
+      <span class="stage-desc">Grayscale input</span>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage-chip s1" onclick="setStage(1)">
+      <span class="stage-num">Stage 1</span>
+      <span class="stage-name">Edge Filter</span>
+      <span class="stage-desc">Gaussian + Sobel + NMS</span>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage-chip s2" onclick="setStage(2)">
+      <span class="stage-num">Stage 2</span>
+      <span class="stage-name">Threshold</span>
+      <span class="stage-desc">Binary edge map</span>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage-chip s3" onclick="setStage(3)">
+      <span class="stage-num">Stage 3</span>
+      <span class="stage-name">Hough Space</span>
+      <span class="stage-desc">Accumulator (ρ, θ)</span>
+    </div>
+    <span class="arrow">→</span>
+    <div class="stage-chip s4" onclick="setStage(4)">
+      <span class="stage-num">Stage 4</span>
+      <span class="stage-name">Lines</span>
+      <span class="stage-desc">Top-50 detected lines</span>
+    </div>
+  </div>
+
+  <!-- Image selector -->
+  <div class="section-label">Select Image (1 – 9)</div>
+  <div class="img-selector" id="imgSelector"></div>
+
+  <!-- Main display: all 5 stages for selected image -->
+  <div class="display-grid" id="displayGrid"></div>
+
+  <!-- Algorithm cards -->
+  <div class="algo-section">
+    <h2>Implementation Details</h2>
+    <div class="algo-grid">
+      <div class="algo-card">
+        <div class="algo-title">myImageFilter <span class="algo-badge">Convolution</span></div>
+        <p>Zero-padded 2D convolution implemented from scratch. Applies any odd-dimension kernel to a grayscale image pixel by pixel without using MATLAB's built-in conv2.</p>
+      </div>
+      <div class="algo-card">
+        <div class="algo-title">myEdgeFilter <span class="algo-badge">Edge Detection</span></div>
+        <p>Gaussian smoothing → Sobel gradient magnitude and orientation → non-maximum suppression along gradient direction (0°, 45°, 90°, 135°) to produce thin edges.</p>
+      </div>
+      <div class="algo-card">
+        <div class="algo-title">myHoughTransform <span class="algo-badge">Hough</span></div>
+        <p>For each edge pixel above threshold, votes across all θ values and computes ρ = x·cos(θ) + y·sin(θ). Accumulates votes in an (ρ, θ) Hough space matrix.</p>
+      </div>
+      <div class="algo-card">
+        <div class="algo-title">myHoughLines <span class="algo-badge">Peak Extraction</span></div>
+        <p>NMS on the Hough accumulator to suppress non-peak bins. Flattens and sorts by vote count; returns the top-N (ρ, θ) pairs corresponding to dominant lines.</p>
+      </div>
+      <div class="algo-card">
+        <div class="algo-title">myHoughLineSegments <span class="algo-badge">EC</span></div>
+        <p>Extension: converts infinite Hough lines into finite line segments by walking along each detected line and grouping connected edge pixels with configurable gap tolerance.</p>
+      </div>
+      <div class="algo-card">
+        <div class="algo-title">Parameters</div>
+        <p>σ = 2 (Gaussian blur), threshold = 0.3 (edge binarisation), ρ resolution = 2 px, θ resolution = π/90 rad, nLines = 50 (peaks extracted from accumulator).</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <a href="https://github.com/Halkhoori2000/Image-Filtering-and-Hough-Transform">GitHub Repository</a>
+  &nbsp;·&nbsp; CMPSC 473 — Computer Vision · Penn State · 2022
+</footer>
+
+<script>
+  const NUM_IMGS = 9;
+  const STAGES = [
+    { label: 'Original',    sublabel: 'Grayscale input',             cls: 's0', suffix: null },
+    { label: 'Edge Filter', sublabel: 'Gaussian + Sobel + NMS',      cls: 's1', suffix: '01edge' },
+    { label: 'Threshold',   sublabel: 'Binary edge map',             cls: 's2', suffix: '02threshold' },
+    { label: 'Hough Space', sublabel: 'Accumulator (ρ, θ)',          cls: 's3', suffix: '03hough' },
+    { label: 'Lines',       sublabel: 'Top-50 detected lines',       cls: 's4', suffix: '04lines' },
+  ];
+
+  let activeImg = 1;
+  let activeStage = 0;
+
+  function imgPath(n, suffix) {
+    const id = String(n).padStart(2, '0');
+    if (suffix === null) return `data/img${id}.jpg`;
+    return `results/img${id}_${suffix}.png`;
+  }
+
+  function buildSelector() {
+    const sel = document.getElementById('imgSelector');
+    sel.innerHTML = '';
+    for (let i = 1; i <= NUM_IMGS; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'img-btn' + (i === activeImg ? ' active' : '');
+      btn.textContent = i;
+      btn.onclick = () => { activeImg = i; render(); };
+      sel.appendChild(btn);
+    }
+  }
+
+  function buildGrid() {
+    const grid = document.getElementById('displayGrid');
+    grid.innerHTML = '';
+    STAGES.forEach((s, idx) => {
+      const card = document.createElement('div');
+      card.className = `stage-card ${s.cls}` + (idx === activeStage ? ' highlighted' : '');
+      card.innerHTML = `
+        <div class="stage-card-header">
+          <div class="stage-dot"></div>
+          <span class="label">${s.label}</span>
+          <span class="sublabel">${s.sublabel}</span>
+        </div>
+        <img src="${imgPath(activeImg, s.suffix)}" alt="${s.label}" loading="lazy">
+      `;
+      card.onclick = () => { activeStage = idx; renderPipeline(); };
+      grid.appendChild(card);
+    });
+  }
+
+  function renderPipeline() {
+    document.querySelectorAll('.stage-chip').forEach((el, i) => {
+      el.classList.toggle('active', i === activeStage);
+    });
+    document.querySelectorAll('.stage-card').forEach((el, i) => {
+      el.classList.toggle('highlighted', i === activeStage);
+    });
+  }
+
+  function setStage(i) {
+    activeStage = i;
+    renderPipeline();
+  }
+
+  function render() {
+    buildSelector();
+    buildGrid();
+    renderPipeline();
+  }
+
+  render();
+</script>
+</body>
+</html>

@@ -24,7 +24,7 @@ Edge detection and Hough Transform pipeline built from scratch in MATLAB. Implem
 | Language | MATLAB |
 | Core techniques | 2D convolution, Gaussian filter, Sobel operator, NMS, Hough Transform |
 | Build | MATLAB script (no toolboxes except `fspecial` and `houghlines` for final rendering) |
-| Platform | MATLAB R2022 |
+| Platform | MATLAB |
 
 ---
 

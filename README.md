@@ -96,5 +96,5 @@ houghScript   % runs full pipeline on data/ → outputs saved to results/
 
 ## Course
 
-TBD  
+CMPEN 454 — Computer Vision I  
 The Pennsylvania State University

@@ -6,6 +6,17 @@ Built from scratch in MATLAB without using built-in image processing functions. 
 
 **[Live Demo →](https://halkhoori2000.github.io/Image-Filtering-and-Hough-Transform/)**
 
+## Use Cases
+- Autonomous vehicle lane detection: road markings are straight lines detectable with Hough even under varying lighting and shadows
+- Document scanning and skew correction: dominant line orientation reveals page rotation, enabling automatic straightening
+- Industrial inspection: detecting edges of machined parts, PCB traces, or structural elements to verify alignment and dimensions
+- Medical imaging: identifying straight anatomical structures such as bone boundaries or surgical instrument shafts in X-ray and fluoroscopy images
+
+## Challenges
+- **NMS orientation quantisation**: gradient direction must be quantised to one of four orientations (0°, 45°, 90°, 135°) and pixels must be suppressed if they are not local maxima along that direction — an off-by-one in the direction mapping produces thick multi-pixel edges that flood the Hough accumulator with duplicate votes for the same line
+- **Hough accumulator resolution tradeoff**: coarse ρ and θ resolution speeds up computation but merges nearby parallel lines into a single peak; fine resolution creates a sparse accumulator where votes scatter across neighbouring bins rather than concentrating — the chosen values (ρ=2px, θ=π/90) balance sensitivity against runtime across all 9 test images
+- **Peak isolation in cluttered accumulator space**: dominant lines produce broad vote clusters; without a second round of NMS on the accumulator itself, the top-N extraction repeatedly selects neighbouring bins of the same line rather than N distinct lines, collapsing the output to a single dominant direction
+
 ---
 
 ## Features

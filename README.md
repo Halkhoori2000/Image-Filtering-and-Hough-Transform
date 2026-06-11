@@ -1,8 +1,10 @@
 # Image Filtering & Hough Transform — MATLAB Edge Detection & Line Finding
 
+*CMPEN 454 — Fundamentals of Computer Vision · The Pennsylvania State University · 2022*
+
 Takes a photo and automatically finds all the straight lines in it — edges of roads, buildings, tables, or any other structure. It works by first sharpening the edges in the image, then using a mathematical voting technique called the Hough Transform to identify which lines best explain those edges.
 
-Built from scratch in MATLAB without using built-in image processing functions. The pipeline implements zero-padded 2D convolution, Gaussian smoothing, Sobel gradient with non-maximum suppression for edge thinning, Hough accumulator voting in (ρ, θ) space, NMS-based peak extraction for the top-N dominant lines, and an extra credit extension that converts infinite Hough lines into finite segments with configurable gap tolerance. Batch-processed across 9 test images.
+Built in MATLAB with the core algorithms implemented from scratch: zero-padded 2D convolution, Gaussian smoothing, Sobel gradient with non-maximum suppression for edge thinning, Hough accumulator voting in (ρ, θ) space, and NMS-based peak extraction for the top-N dominant lines. An extra credit segment extractor walks each line to group edge pixels into finite segments; final overlays use MATLAB's houghlines with gap and minimum-length filtering. Batch-processed across 9 test images.
 
 **[Live Demo →](https://halkhoori2000.github.io/Image-Filtering-and-Hough-Transform/)**
 

@@ -8,6 +8,8 @@ Built in MATLAB with the core algorithms implemented from scratch: zero-padded 2
 
 **[Live Demo →](https://halkhoori2000.github.io/Image-Filtering-and-Hough-Transform/)**
 
+📄 **[Project Report](docs/project-report.docx)** — the original write-up (method, derivations, results)
+
 ## Use Cases
 - Autonomous vehicle lane detection: road markings are straight lines detectable with Hough even under varying lighting and shadows
 - Document scanning and skew correction: dominant line orientation reveals page rotation, enabling automatic straightening
